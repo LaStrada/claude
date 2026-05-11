@@ -1,0 +1,14 @@
+{
+  "name": "lastrada",
+  "owner": {
+    "name": "Ståle Storø Hauknes",
+    "url": "https://github.com/LaStrada"
+  },
+  "plugins": [
+    {
+      "name": "ios-spm",
+      "source": "./plugins/ios-spm",
+      "description": "iOS Swift Package Manager update workflow for Xcode-managed projects. Discovers outdated direct/transitive packages, applies picks via project.pbxproj edits + xcodebuild -resolvePackageDependencies, optionally verifies with a build, and opens a PR with changelog summaries. Fills the gap Renovate can't natively close (renovatebot/renovate#9735)."
+    }
+  ]
+}
