@@ -67,6 +67,7 @@ The plugin needs somewhere to persist your followed-PRs list. Two backends, pick
 ### Secret GitHub Gist (multi-machine sync, best-effort)
 
 - Storage: a secret Gist in your authenticated `gh` account, plus a tiny local config file `~/.claude/data/pr-tasklist/config.json` holding the Gist ID.
+- **Requires the [`gh` CLI](https://cli.github.com/) to be installed and authenticated** — the Gist path uses `gh api user` and `gh gist create / view / edit`, none of which has an MCP equivalent. On an MCP-only install the first-run menu hides this option; install `gh` and run `! gh auth login`, then say "reconfigure pr-tasklist storage" to switch.
 - **Best-effort sync across machines** — install the plugin on a second machine, paste the same Gist ID, you're up. Caveat below on concurrent edits.
 - Right choice if **all** of these apply:
   - You work primarily on public OSS / your own personal projects.

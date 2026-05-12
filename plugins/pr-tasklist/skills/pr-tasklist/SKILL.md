@@ -1,6 +1,6 @@
 ---
 name: pr-tasklist
-description: Use when the user asks to see their GitHub PR dashboard, queue, tasklist, or "what's on their plate" — typical triggers are "show my PRs", "my open PRs", "PR dashboard", "PR queue", "PR tasklist", "what's on my plate", "what should I review", "PRs waiting on me", or "/prs". Renders four interactive numbered tables (Mine / Assigned / Review-requested / Followed) sourced from `gh search prs`, plus a user-managed followed list backed by either a local JSON file or a secret GitHub Gist. First-run setup prompts the user to choose storage with an explicit privacy warning. Read-only by default; mutates state only on explicit user action.
+description: Use when the user asks to see their GitHub PR dashboard, queue, tasklist, or "what's on their plate" — typical triggers are "show my PRs", "my open PRs", "PR dashboard", "PR queue", "PR tasklist", "what's on my plate", "what should I review", "PRs waiting on me", or "/prs". Renders four interactive numbered tables (Mine / Assigned / Review-requested / Followed) sourced from the official GitHub MCP server when present, with `gh api graphql` as a fallback. Followed list is user-managed and persisted in either a local JSON file or a secret GitHub Gist. First-run setup prompts the user to choose storage with an explicit privacy warning. Read-only by default; mutates state only on explicit user action.
 ---
 
 # pr-tasklist
@@ -12,7 +12,7 @@ A cross-repo dashboard for the PRs the user cares about. Lives in four sections:
 3. **Review-requested** — PRs where the user is a requested reviewer.
 4. **Followed** — user-curated list, persisted in a storage backend.
 
-The first three are pure reads from `gh search prs`. The fourth requires a storage backend (local JSON or secret Gist), set up on first run.
+The first three are live reads via the GitHub MCP server (preferred) or `gh api graphql` (fallback). The fourth requires a storage backend (local JSON or secret Gist), set up on first run.
 
 ## When this applies
 
@@ -150,7 +150,12 @@ If `config.storage == "none"`, skip this step.
 
 Read the state file via the storage backend (see **Storage backends** below). Parse `followed: [{url, addedAt}]`.
 
-For each followed URL, fetch current metadata using the same backend chosen in step 3, with **the same fallback rules** — if the MCP `get_pull_request` tool errors out for the first URL, switch the whole step to `gh` (don't keep retrying MCP for the remaining URLs).
+For each followed URL, fetch current metadata using the same backend chosen in step 3. **Distinguish two failure classes:**
+
+- **URL-local failures** (404, malformed URL, non-github.com host, permissions denied for a single repo) — *soft-fail this URL only*, keep going on the same backend. Collect into a "stale follows" footer the user can clean up.
+- **Backend-level failures** (auth error, tool-not-available, repeated 5xx, network out) — *wholesale-switch to the alternate backend* and restart this step. Don't mix backends within a single completed step.
+
+In practice: the first time you see a 401/403/tool-missing-from-MCP signal, treat the backend as broken and switch. A single 404 is not such a signal.
 
 - **MCP**: `mcp__<server>__get_pull_request` with `owner`, `repo`, `pull_number` parsed from the URL.
 - **`gh` CLI** (with shell-quoted URL):
@@ -159,14 +164,15 @@ For each followed URL, fetch current metadata using the same backend chosen in s
   ```
   This works — `gh pr view --json reviewDecision` IS supported; only `gh search prs --json` lacks it.
 
-**Concurrency cap.** Run these in parallel, but cap to ~8 in flight at a time. Someone with 200 followed PRs would otherwise fork-bomb the shell or rate-limit themselves on the GitHub API. A simple cap:
+**Concurrency cap.** Run these in parallel, but cap to ~8 in flight at a time. Someone with 200 followed PRs would otherwise fork-bomb the shell or rate-limit themselves on the GitHub API. A working cap:
 
 ```bash
 printf '%s\n' "${followed_urls[@]}" \
-  | xargs -P 8 -I {} gh pr view "{}" --json url,title,...
+  | xargs -P 8 -I {} gh pr view "{}" \
+      --json url,title,number,isDraft,state,updatedAt,reviewDecision,author,repository
 ```
 
-Soft-fail individual URLs that 404. Collect non-resolvable URLs into a "stale follows" footer the user can clean up.
+(Spell out the full field list rather than leaving an ellipsis — copy-pasting `...` into a real shell will fail.)
 
 **Quoting note.** Treat every URL coming from `state.json` as user-supplied input — always pass through quoted shell variables (`"$url"`), never interpolate into a command string directly. A maliciously crafted URL in the followed list could otherwise become a command-injection surface.
 
@@ -277,11 +283,11 @@ Show this warning **verbatim** before the choice prompt:
 > - Mixed-trust workflows are a footgun: if you ever follow a PR from a private repo, its title goes into the Gist alongside the public ones.
 > - If you're unsure, pick Local. You can switch to Gist later by saying "reconfigure pr-tasklist storage".
 
-Then `AskUserQuestion` with:
+Then `AskUserQuestion` with options scoped to what the install supports:
 
-- `Local JSON (recommended for private/internal work)`
-- `Secret GitHub Gist (multi-machine sync, public OSS workflows)`
-- `Skip — show lists only, no followed-list support`
+- `Local JSON (recommended for private/internal work)` — always available.
+- `Secret GitHub Gist (multi-machine sync, public OSS workflows)` — **only offer this option when `gh` is installed AND `gh auth status` succeeded** (from step 1). The Gist path uses `gh api user` and `gh gist create / view / edit` — none of which has an MCP equivalent. Without `gh`, this option cannot succeed; hide it rather than letting the user pick a dead path. If you must mention it for completeness, gray it out and explain: "Gist storage requires the `gh` CLI — install [`gh`](https://cli.github.com/) and run `! gh auth login`, then say 'reconfigure pr-tasklist storage' to switch."
+- `Skip — show lists only, no followed-list support` — always available.
 
 ### If Local
 
