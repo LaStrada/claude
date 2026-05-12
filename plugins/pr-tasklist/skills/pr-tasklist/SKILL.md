@@ -95,6 +95,8 @@ Failure modes that should trigger fallback:
 - `gh api graphql` returns an authentication error or 5xx.
 - The chosen backend doesn't expose the tool the SKILL needs (e.g. MCP variant lacks `search_pull_requests`).
 
+**Retry transient JSON-parse failures once before declaring failure.** `gh api graphql` occasionally returns an HTML error page (edge 5xx, transient routing hiccup) which trips `jq` with `invalid character '<' looking for beginning of value`. Retry the same call once; only then treat it as a backend-level failure and fall back. This avoids wholesale-switching the user's whole session on a one-second blip.
+
 Surface the downgrade with one short line: `MCP unreachable (<reason>) — falling back to gh CLI.` Don't fail silently.
 
 **Backend A — GitHub MCP**
@@ -209,7 +211,7 @@ Show the per-bot count in parentheses if there are multiple bot identities. Expa
 
 Expand stale rows when the user says "show stale", "include old", "show ancient PRs". When expanding, mark each row with `💤` in the Updated column.
 
-If a section is entirely stale (0 active, N stale), still show the header so the user knows the data exists.
+**This is a binary fold, not a gradient.** A 179-day-old PR is fully active; a 181-day-old PR is fully folded. Resist any urge to "smooth" the transition with a dim-vs-bright colouring or a `~6mo 💤` warning band — the cutoff has to be explicit so users learn it. If a section is entirely stale (0 active, N stale), still show the header so the user knows the data exists.
 
 ### 7. Render
 
@@ -240,9 +242,18 @@ Format guidelines:
   - `REV_REQ` ← `reviewDecision == REVIEW_REQUIRED`
   - `DRAFT` ← `isDraft == true` (takes precedence over reviewDecision)
   - `—` ← anything else (or missing)
-- **Updated column**: relative time (`2h`, `3d`, `1w`, `~6mo`). Append `💤` if the row was unfolded from stale.
-- **Repo column**: `owner/repo` truncated with `…` if it exceeds the column width. Never show the raw URL.
-- **Title column**: truncate with `…`; don't wrap.
+- **Updated column**: relative time (`<1d`, `3d`, `2w`, `~6mo`, `5y`). Append `💤` if the row was unfolded from stale. Reusable `jq` helper:
+  ```jq
+  def reltime:
+    ((now - (. | fromdate)) / 86400) | floor |
+      if . < 1 then "<1d"
+      elif . < 7 then "\(.)d"
+      elif . < 30 then "\(. / 7 | floor)w"
+      elif . < 365 then "~\(. / 30 | floor)mo"
+      else "\(. / 365 | floor)y" end;
+  ```
+- **Repo column**: `owner/repo` only — never inline `#NNNN` or the raw URL. The global `#` column already gives every row a unique handle.
+- **Title column**: truncate with `…`; don't wrap. Default to ~56 chars when terminal width is unknown; widen only if you've measured it.
 - **Empty sections**: still print the header so the user knows the section ran. `(none)` underneath or a short cheer for an empty Review-requested.
 
 ### 8. Ask for an action
