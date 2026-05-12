@@ -9,6 +9,11 @@
       "name": "ios-spm",
       "source": "./plugins/ios-spm",
       "description": "iOS Swift Package Manager update workflow for Xcode-managed projects. Discovers outdated direct/transitive packages, applies picks via project.pbxproj edits + xcodebuild -resolvePackageDependencies, optionally verifies with a build, and opens a PR with changelog summaries. Fills the gap Renovate can't natively close (renovatebot/renovate#9735)."
+    },
+    {
+      "name": "review-comments",
+      "source": "./plugins/review-comments",
+      "description": "Audit new and changed comments, docstrings, and adjacent markdown docs in the current change set. For each block: keep, tighten, rephrase, or drop — based on the rule that a comment must justify its existence with non-obvious WHY. Read-only by default: proposes edits, never auto-applies."
     }
   ]
 }
