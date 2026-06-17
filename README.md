@@ -27,6 +27,36 @@ This plugin fills the gap:
 Triggers: *"check SPM updates"*, *"what iOS packages can be bumped"*,
 *"bump `<package>` to X.Y.Z"*, *"open the PR"*, etc.
 
+### [`pr-tasklist`](./plugins/pr-tasklist)
+
+A cross-repo GitHub PR dashboard. Shows what's on your plate in four numbered
+sections — PRs you authored, are assigned to, are review-requested on, plus a
+personal followed list you curate. Live data via the official GitHub MCP server
+(preferred) or `gh api graphql` (fallback); auto-detects whichever is available.
+
+After the tables render it stays **interactive**: an action loop lets you open a
+PR in the browser, follow/unfollow, or adjust the view (which sections show,
+expand bots/stale) and repeats until you're done — no re-running `/prs` between
+actions. Bot PRs (renovate, dependabot, …) collapse into one row per section;
+PRs untouched for 180+ days fold away behind a count.
+
+The followed list persists to either local JSON (safest for private/internal
+work) or a secret GitHub Gist (best-effort multi-machine sync for public OSS),
+chosen on first run with an explicit privacy warning.
+
+Triggers: `/prs`, *"show my PRs"*, *"PR dashboard"*, *"what's on my plate"*,
+*"what should I review"*.
+
+### [`review-comments`](./plugins/review-comments)
+
+Audits new and changed comments, docstrings, and adjacent markdown in the
+current change set. For each block it decides keep / tighten / rephrase / drop,
+on the rule that a comment must earn its place with a non-obvious *why*.
+Read-only by default — it proposes edits, never auto-applies.
+
+Triggers: *"review the comments"*, *"are the comments overkill"*,
+*"trim the docstrings"*.
+
 ## Installation
 
 In Claude Code:
@@ -34,6 +64,8 @@ In Claude Code:
 ```
 /plugin marketplace add LaStrada/claude
 /plugin install ios-spm@lastrada
+/plugin install pr-tasklist@lastrada
+/plugin install review-comments@lastrada
 ```
 
 (replace `LaStrada/claude` with whatever GitHub coordinates the marketplace

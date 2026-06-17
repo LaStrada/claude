@@ -256,23 +256,42 @@ Format guidelines:
 - **Title column**: truncate with `…`; don't wrap. Default to ~56 chars when terminal width is unknown; widen only if you've measured it.
 - **Empty sections**: still print the header so the user knows the section ran. `(none)` underneath or a short cheer for an empty Review-requested.
 
-### 8. Ask for an action
+### 8. Action loop
 
-Use `AskUserQuestion` with options scoped to what makes sense for the current state. Always offer `Done`.
+Rendering the dashboard is not the end. Drive a **loop** so the user can take several actions in one session without re-running `/prs`. Repeat until the user picks **Done**:
 
-Possible actions:
+1. Present an action menu via `AskUserQuestion`.
+2. Perform the chosen action.
+3. Re-render only when state changed. Follow/unfollow change the tables; open-in-browser and the view-toggle do not require a re-fetch — reuse the data already in hand and re-render from it.
+4. Loop back to the menu.
 
-- **Open #N in browser** — runs `gh pr view "$url" --web` (always quote the URL; it came from search results).
-- **Mark #N as followed** — only shown when `config.storage != "none"` and #N is not already followed.
-- **Unfollow #N** — only shown when #N is in the followed list.
-- **Reconfigure storage** — re-runs first-time setup with the existing followed list migrated to the new backend.
-- **Done** — exit cleanly.
+**The 4-option cap is real.** `AskUserQuestion` shows at most 4 explicit options (plus an automatic free-text "Other"). Do NOT try to list every PR as an option — the numbered table is the selector, and the user names a row by its global `#`. Scope the 4 options to what makes sense for the current state; everything else is reachable through the free-text "Other" slot.
 
-After any mutation, end with a single confirmation line:
+Pick the ≤4 most relevant actions for the current state from:
+
+- **Open #N in browser** — runs `gh pr view "$url" --web` (always quote the URL; it came from search results). The PR number arrives via the "Other" free text (`open 4`, `#4`).
+- **Follow #N** — only when `config.storage != "none"`. Omit when every visible row is already followed.
+- **Unfollow #N** — only when at least one followed row is visible.
+- **Adjust view** — opens the view-toggle panel (below).
+- **Reconfigure storage** — re-runs first-time setup, migrating the existing followed list.
+- **Done** — exit cleanly. Always offer this.
+
+When the user supplies a bare number or `#N` in the "Other" slot, map it to the global row number from the **last render**.
+
+After any mutation, print a single confirmation line before looping back:
 
 > Followed `<url>`. Saved to `<location>`.
 
 Where `<location>` is the resolved local path or the gist URL.
+
+#### View-toggle panel ("Adjust view")
+
+Replaces the "say 'expand bots' / 'show stale'" text incantations with a real control. One `AskUserQuestion` call with **two `multiSelect` questions** (both fit the 4-option cap):
+
+- **Sections to show** (multiSelect): `Mine`, `Assigned`, `Review-requested`, `Followed`. Pre-select whichever are currently shown. Drop `Followed` from the options when `config.storage == "none"`.
+- **Expand collapsed rows** (multiSelect): `Bots`, `Stale`. Pre-select whichever are currently expanded.
+
+Apply the returned selections to the in-memory view state and re-render **from the data already fetched** — do not re-query the backend. The natural-language equivalents ("expand bots", "show stale", "hide mine") still work.
 
 ## First-time storage setup
 

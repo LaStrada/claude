@@ -47,6 +47,8 @@ The plugin picks whichever backend is available, prefers MCP if both are. You on
 - `/prs setup` — (re)run storage setup.
 - Natural language: "show my PRs", "PR dashboard", "what's on my plate", "what should I review", "PR queue".
 
+After the tables render, the dashboard stays interactive: pick an action (open a PR, follow/unfollow, adjust the view) from the menu and it loops until you say **Done** — no need to re-run `/prs` between actions. Specific PRs are named by their global `#` (e.g. "open 4").
+
 On first run you'll be asked where to store your followed-PRs list. Read the next section before picking.
 
 ## Storage choice — privacy matters
@@ -92,6 +94,7 @@ You can switch backends any time with `/prs setup` or by saying "reconfigure pr-
 
 - **Bot PRs** (Renovate, Dependabot, GitHub Actions, etc.) collapse into a single row per section: `🤖 23 bot PRs — say "expand bots" to list`. Detected via `author.__typename == "Bot"` or login ending in `[bot]`.
 - **Stale PRs** older than 180 days are hidden by default. Section headers carry an `(N stale)` count; say "show stale" to expand them.
+- **View toggles.** Pick "Adjust view" from the action menu to toggle which sections show and whether bots/stale rows are expanded — a checkbox panel equivalent to the "expand bots" / "show stale" text commands.
 
 ## Scope
 

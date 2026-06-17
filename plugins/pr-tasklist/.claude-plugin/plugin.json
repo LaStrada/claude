@@ -1,7 +1,7 @@
 {
   "name": "pr-tasklist",
-  "description": "GitHub PR dashboard for Claude Code. Shows PRs you authored, are assigned to, are review-requested on, plus a personal followed list. Live data via the official GitHub MCP server (preferred) or `gh api graphql` (fallback); auto-detects whichever is available and falls back on failure. Followed list backed by either local JSON (single machine, safest for private/internal work) or a secret GitHub Gist (best-effort multi-machine sync, suitable for public OSS). First-run setup prompts the user to pick storage with an explicit privacy warning. Interactive numbered tables with open-in-browser, follow, and unfollow actions. Needs either `gh` CLI or a GitHub MCP server.",
-  "version": "0.1.0",
+  "description": "GitHub PR dashboard for Claude Code. Shows PRs you authored, are assigned to, are review-requested on, plus a personal followed list. Live data via the official GitHub MCP server (preferred) or `gh api graphql` (fallback); auto-detects whichever is available and falls back on failure. Followed list backed by either local JSON (single machine, safest for private/internal work) or a secret GitHub Gist (best-effort multi-machine sync, suitable for public OSS). First-run setup prompts the user to pick storage with an explicit privacy warning. Interactive numbered tables with an action loop — open-in-browser, follow, unfollow, and a view-toggle panel — that repeats until you're done. Needs either `gh` CLI or a GitHub MCP server.",
+  "version": "0.2.0",
   "author": {
     "name": "Ståle Storø Hauknes",
     "url": "https://github.com/LaStrada"
