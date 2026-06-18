@@ -16,6 +16,11 @@
       "description": "Audit new and changed comments, docstrings, and adjacent markdown docs in the current change set. For each block: keep, tighten, rephrase, or drop — based on the rule that a comment must justify its existence with non-obvious WHY. Read-only by default: proposes edits, never auto-applies."
     },
     {
+      "name": "review-with",
+      "source": "./plugins/review-with",
+      "description": "Second-opinion code review via external CLIs. A panel skill fans one resolved diff out to Gemini, Copilot, and Codex in parallel — one upload gate, a public-repo gate for Codex, and a synthesized agreement-sorted report — plus per-tool skills for a single reviewer. Slash commands expose each (/review-with:super-review, :gemini, :codex, :copilot) with :second-opinion and :external-review panel aliases; \"super review\", \"second opinion\", \"external review\", and \"review with <tool>\" also auto-invoke. Never posts to or resolves PR threads without explicit approval."
+    },
+    {
       "name": "pr-tasklist",
       "source": "./plugins/pr-tasklist",
       "description": "GitHub PR dashboard. Shows PRs you authored, are assigned to, are review-requested on, and a user-curated followed list, rendered as numbered tables across all your repos. Live data via the official GitHub MCP server (preferred) or `gh api graphql` (fallback). After rendering it stays interactive: an action loop to open in browser, follow/unfollow, or adjust the view, repeating until you're done. Followed list is backed by either local JSON (single machine, safest for private/internal work) or a secret GitHub Gist (best-effort multi-machine sync, suitable for public OSS). First-run setup prompts the user to pick storage with an explicit privacy warning. Needs either `gh` CLI or a GitHub MCP server — at least one."
