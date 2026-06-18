@@ -207,6 +207,22 @@ If anything is unmatched or ambiguous, DO NOT guess: restate what you understood
 list the unmatched tokens, and re-ask. The resolved pick set then flows into
 Phase 2's "confirm the picks" step, which is the final gate before any edit.
 
+### Step 9: Major bumps & non-interactive fallback
+
+**Major bumps are never applied silently.** A major version jump almost always
+carries breaking API changes, so:
+
+- Exclude majors from `Apply all` and `Apply all minors/patches`.
+- Offer a major only through an explicit `… incl. majors` option, an individual
+  `Yes` in "Review one by one", or by being named in the free-text slot.
+- When a major is in scope, recommend it gets its own branch + PR and a read of
+  the upstream changelog before committing.
+
+**Non-interactive fallback.** When `AskUserQuestion` is unavailable (headless or
+scheduled runs), skip Steps 7–8 and fall back to a plain text prompt: list the
+actionable updates and ask the user to name picks, `all` (non-major), or a
+specific package + version. The skill must still work without an interactive UI.
+
 ## Phase 2: Apply
 
 Enter only on explicit opt-in. Examples that count: *"Yes, apply"*, *"Bump <package> to X.Y.Z"*, *"Bump everything auto-resolvable"*.
