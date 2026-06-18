@@ -112,18 +112,20 @@ gh api "repos/$owner_repo/tags?per_page=100" --jq '.[].name' \
 
 For non-GitHub hosts (rare): print "couldn't auto-check, location: `<url>`" and skip.
 
-### Step 6: Report
+### Step 6: Classify, assess, and report
 
-Group results into buckets (omit empty ones):
+Before rendering, classify each actionable update by **bump tier** and attach a
+**risk verdict** (see the subsections after the report). Group results into
+buckets (omit empty ones):
 
 ```
 ## Direct deps with updates available
 
 ### Auto-resolvable (upToNextMajor / upToNextMinor)
-- [<n>] <name>: <current> → <latest> (spec: <kind>)
+- [<n>] <name>: <current> → <latest> — <tier> (spec: <kind>)
 
 ### Pinned-exact (manual pbxproj edit)
-- [<n>] <name>: <current> → <latest> (spec: exactVersion)
+- [<n>] <name>: <current> → <latest> — <tier> (spec: exactVersion)
 
 ### Pinned-revision (skill won't auto-bump)
 - <name>: on commit <short-sha>. No auto-check.
@@ -139,6 +141,19 @@ N direct + M transitive packages already on latest. (suppressed unless requested
 Number the **actionable** rows (auto-resolvable + exact-pinned) sequentially
 across both buckets — `[1]`, `[2]`, … — so they can be referenced by number in
 Step 7. Then run Step 7 to choose what to apply.
+
+#### Bump tier
+
+Classify every actionable update by comparing `current → latest`:
+
+- **patch** (`Z` changed) — should be safe.
+- **minor** (`Y` changed) — usually additive (new features), can still break.
+- **major** (`X` changed) — assume breaking until proven otherwise.
+
+Parsing notes: strip a leading `v`; tolerate 4-segment versions (segment 1 =
+major, 2 = minor, 3+ = patch). **Pre-1.0 caveat:** for `0.y.z` a `0.6 → 0.7`
+(minor) bump is breaking under semver — treat pre-1.0 minor as major-level risk.
+Non-semver / unparseable tags → tier `unknown`, treat as caution.
 
 ### Step 7: Interactive selection
 
