@@ -1,7 +1,7 @@
 {
   "name": "ios-spm",
   "description": "iOS Swift Package Manager tooling for Xcode-managed SPM dependencies. Renovate can't natively update Package.resolved files inside .xcodeproj bundles (see renovatebot/renovate#9735), so this plugin fills the gap: discover outdated direct/transitive packages, apply picked bumps by editing project.pbxproj, refresh Package.resolved via xcodebuild -resolvePackageDependencies, optionally verify with a build, and open a PR with changelog summaries.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": {
     "name": "Ståle Storø Hauknes",
     "url": "https://github.com/LaStrada"
