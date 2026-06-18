@@ -120,10 +120,10 @@ Group results into buckets (omit empty ones):
 ## Direct deps with updates available
 
 ### Auto-resolvable (upToNextMajor / upToNextMinor)
-- <name>: <current> → <latest> (spec: <kind>)
+- [<n>] <name>: <current> → <latest> (spec: <kind>)
 
 ### Pinned-exact (manual pbxproj edit)
-- <name>: <current> → <latest> (spec: exactVersion)
+- [<n>] <name>: <current> → <latest> (spec: exactVersion)
 
 ### Pinned-revision (skill won't auto-bump)
 - <name>: on commit <short-sha>. No auto-check.
@@ -136,7 +136,60 @@ Group results into buckets (omit empty ones):
 N direct + M transitive packages already on latest. (suppressed unless requested)
 ```
 
-Prompt: *"Want me to apply any of these? Pick specific packages, 'all auto-resolvable', or 'all exact-pinned with non-major bumps'."*
+Number the **actionable** rows (auto-resolvable + exact-pinned) sequentially
+across both buckets — `[1]`, `[2]`, … — so they can be referenced by number in
+Step 7. Then run Step 7 to choose what to apply.
+
+### Step 7: Interactive selection
+
+Drive the apply decision through `AskUserQuestion` rather than a free-form text
+prompt. The flow adapts to how many **actionable** updates were found.
+
+`actionable` = direct deps that have a newer version (auto-resolvable +
+exact-pinned). It EXCLUDES up-to-date packages, revision-pinned deps (reported
+but never auto-bumped), and transitive deps (they move with their parent). Flag
+any **major** bump (`⚠`) — majors are never applied silently; they need an
+explicit opt-in.
+
+Let `N = len(actionable)` and `INTERACTIVE_MAX = 10` (tune this one constant to
+shift the granular/bulk boundary).
+
+**AskUserQuestion mechanics (the 4-option cap is real).** Each question shows at
+most 4 explicit options plus an automatic free-text "Other", and a single call
+holds at most 4 questions. So you cannot turn every package into its own option
+once there are more than four — past that, the numbered report list is the
+selector and the user names rows through the "Other" slot.
+
+#### N == 0
+Don't ask anything. Print "Everything's up to date" and stop.
+
+#### 1 ≤ N < INTERACTIVE_MAX → granular
+One `AskUserQuestion`, single question — *"N updates available. How do you want
+to apply them?"* — options:
+
+1. `Apply all (N)` — applies every non-major pick
+2. `Review one by one`
+3. `Minors/patches only` — include this option ONLY when the set also contains a major
+4. *(automatic "Other")* — free-text, e.g. "the firebase one and lottie"
+
+- **Review one by one** → walk `actionable` in batches of up to 4 packages per
+  call (so ≤9 items needs ≤3 calls: 4 + 4 + 1). One question per package: header
+  = package name, prompt *"Update <name> <current> → <latest>?"* (append
+  `(⚠ major)` when relevant), options `[Yes, No]`. Collect the "Yes" set.
+- Any other choice resolves directly to a pick set.
+
+#### N ≥ INTERACTIVE_MAX → bulk
+The numbered list from Step 6 is the selector — do NOT try to render each package
+as an option. One `AskUserQuestion` — *"N updates available (listed above). What
+do you want to do?"* — options:
+
+1. `Apply all minors/patches` — recommended; excludes majors
+2. `Apply everything incl. majors` — show only when majors exist (else `Apply all`)
+3. `Skip`
+4. *(automatic "Other")* — free-text by name or list number, e.g. "1, 3, 6-9"
+
+Whatever the user picks, resolve it to a concrete pick set and hand off to
+Phase 2, which confirms the picks before editing anything.
 
 ## Phase 2: Apply
 
