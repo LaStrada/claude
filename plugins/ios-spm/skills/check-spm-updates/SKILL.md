@@ -170,7 +170,7 @@ to apply them?"* — options:
 1. `Apply all (N)` — applies every non-major pick
 2. `Review one by one`
 3. `Minors/patches only` — include this option ONLY when the set also contains a major
-4. *(automatic "Other")* — free-text, e.g. "the firebase one and lottie"
+4. *(automatic "Other")* — free-text, e.g. "the networking lib and the logging one"
 
 - **Review one by one** → walk `actionable` in batches of up to 4 packages per
   call (so ≤9 items needs ≤3 calls: 4 + 4 + 1). One question per package: header
@@ -197,7 +197,7 @@ When the user answers through "Other", parse it against `actionable` before
 applying:
 
 - **Names** — case-insensitive substring match on the package identity
-  (e.g. "firebase" → `firebase-ios-sdk`).
+  (e.g. "anim" matches a `…-animation` package).
 - **List numbers / ranges** — `3`, `1,4,7`, `5-8` map to the numbered rows from
   Step 6.
 - **Keywords** — `all`, `minors` / `patches` (exclude majors), `all except <x>`,
