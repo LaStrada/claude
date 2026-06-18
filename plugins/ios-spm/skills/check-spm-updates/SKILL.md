@@ -9,8 +9,8 @@ End-to-end SPM dependency update flow for Xcode-managed projects:
 
 1. **Phase 1 — Discover** (default, read-only): find outdated direct/transitive packages.
 2. **Phase 2 — Apply** (opt-in): edit `project.pbxproj` for picks, run `xcodebuild -resolvePackageDependencies` to refresh `Package.resolved` + transitive deps.
-3. **Phase 3 — Open PR** (opt-in, after Phase 2): commit + push + open a PR with a changelog summary per package, compare links, and collapsible release notes.
-4. **Phase 4 — Verify build** (optional, before Phase 3): run `xcodebuild build` to confirm the project still compiles, then re-diff `Package.resolved` to catch any further auto-resolve the build triggered.
+3. **Phase 3 — Verify build** (optional): run `xcodebuild build` to confirm the project still compiles, then re-diff `Package.resolved` to catch any further auto-resolve the build triggered.
+4. **Phase 4 — Open PR** (opt-in, after Phase 2): commit + push + open a PR with a changelog summary per package, compare links, and collapsible release notes.
 
 Why this skill exists: Renovate doesn't natively manage SPM dependencies declared in `.xcodeproj` bundles ([renovatebot/renovate#9735](https://github.com/renovatebot/renovate/issues/9735)), and `xcodebuild -resolvePackageDependencies` alone respects existing pins ([Swift Forums #55545](https://forums.swift.org/t/xcodebuild-update-to-latest-package-versions/55545)). The pbxproj edit + `rm Package.resolved` + resolve dance is the only reliable path.
 
@@ -30,12 +30,12 @@ Trigger phrases (not exhaustive):
 - "bump <package> to X.Y.Z" (specific package + version)
 - "update all the auto-resolvable ones"
 
-**Phase 3 (open PR):**
-- "open the PR" / "file the PR" / "create a PR"
-- "apply and open PR" (chains 2 → 3)
-
-**Phase 4 (build verify, optional):**
+**Phase 3 (build verify, optional):**
 - "verify the build first" / "build to check" / "make sure it compiles"
+
+**Phase 4 (open PR):**
+- "open the PR" / "file the PR" / "create a PR"
+- "apply and open PR" (chains 2 → 4)
 
 **Bug-driven investigation (special, opt-in — never recommends an update):**
 - "we have a bug in `<package>`, is there a fix / newer version?"
@@ -51,8 +51,8 @@ Do NOT trigger for:
 
 1. **Phase 1 is strictly read-only.** Never edit `Package.resolved`, `project.pbxproj`, or run git state-changing commands.
 2. **Phase 2 requires explicit user opt-in** after Phase 1's report is visible. Never auto-jump from a discovery trigger. When it does run, it writes **only** the SPM version/revision pins in `project.pbxproj` plus the regenerated `Package.resolved` — never build settings, schemes, or the app's `IPHONEOS_DEPLOYMENT_TARGET`. Min-OS is read for risk assessment only; the skill never raises the app's deployment target.
-3. **Phase 3 requires explicit user opt-in** and Phase 2 must have completed successfully. Never open empty PRs.
-4. **Phase 4 is opt-in.** Never block on building unless the user asks for verification.
+3. **Phase 3 is opt-in.** Never block on building unless the user asks for verification.
+4. **Phase 4 requires explicit user opt-in** and Phase 2 must have completed successfully. Never open empty PRs.
 5. **Never auto-resolve `kind = revision` deps.** Refuse and ask for the new SHA.
 6. **Never modify transitive deps directly.** They move with their parent.
 7. **Respect rate limits.** GitHub's API allows ~5000/hr authenticated, ~60/hr unauthenticated.
@@ -207,7 +207,7 @@ say so and fall back to the compare URL.
 
 #### Changelog links
 
-Whenever you surface a changelog (here, Step 10, or the Phase 3 PR body), give
+Whenever you surface a changelog (here, Step 10, or the Phase 4 PR body), give
 two links, built from the **real tag names** (keep any `v` prefix — a stripped
 version 404s):
 
@@ -446,7 +446,7 @@ The `rm` is mandatory — without it, `-resolvePackageDependencies` honours exis
 3. Call out transitive bumps that came along — these aren't in the user's picks but flow from the direct bumps.
 4. Note any direct deps that *didn't* move — sometimes a transitive dep's parent has a constraint that holds the bump back.
 
-## Phase 4: Verify build (optional)
+## Phase 3: Verify build (optional)
 
 Trigger only when the user explicitly asks (*"verify with a build"*, *"make sure it still compiles"*, etc.). Otherwise skip.
 
@@ -477,18 +477,18 @@ After Phase 2 succeeds, `Package.resolved` reflects the new versions but **the p
    ```
    Why: `xcodebuild build` can auto-trigger another resolve if it detects checkpoint inconsistencies (especially with binary-artifact deps like Intercom). Catch any post-build delta and call it out — it's part of the change set, not noise.
 4. **Report**:
-   - ✅ Build succeeded + no Package.resolved diff → proceed to Phase 3.
+   - ✅ Build succeeded + no Package.resolved diff → proceed to Phase 4.
    - ✅ Build succeeded + Package.resolved diff → call out the additional bumps; ask the user if they're acceptable before opening the PR.
    - ❌ Build failed → show the relevant compile error, leave changes uncommitted, suggest either reverting specific package bumps or fixing the API breakage in app code.
 
-### What this skill won't do in Phase 4
+### What this skill won't do in Phase 3
 
 - **Run tests.** Build verification only — compile success doesn't catch runtime regressions. Test sweep is the user's call.
 - **Fix compile errors automatically.** Bumps can introduce real API changes; surfacing the error is the skill's job, fixing it is a separate task.
 
-## Phase 3: Open PR
+## Phase 4: Open PR
 
-Enter only after Phase 2 (and optionally Phase 4) succeeded.
+Enter only after Phase 2 (and optionally Phase 3) succeeded.
 
 ### Step 1: Check for a PR template
 
