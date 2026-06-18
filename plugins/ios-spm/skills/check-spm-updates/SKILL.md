@@ -205,6 +205,27 @@ breaking signals — `breaking`, `removed`, `renamed`, `migrat`, `no longer`, an
 Keep-a-Changelog `### Removed` / `### Changed` headings. No notes published →
 say so and fall back to the compare URL.
 
+#### Changelog links
+
+Whenever you surface a changelog (here, Step 10, or the Phase 3 PR body), give
+two links, built from the **real tag names** (keep any `v` prefix — a stripped
+version 404s):
+
+- **Always** the target release page — `…/releases/tag/<to>`. Even across many
+  bumps this carries the maintainer's hand-written highlights ("fixes X", "new:
+  Y") that a raw diff can't show.
+- **Always** the compare — `…/compare/<from>...<to>` — the authoritative full
+  delta across every intermediate release.
+
+For a **multi-version** jump (releases exist strictly between `from` and `to`),
+also surface the intermediate notes: enumerate each intermediate release link
+when there are ≤4, otherwise just note "N releases in between — see compare". A
+single-step bump needs nothing beyond the two links above.
+
+Fallbacks: tags-only repo (no release page) → compare or `…/tags`;
+revision-pinned `from` → `…/compare/<revision>...<to>`; non-GitHub host → the
+location URL only.
+
 #### Min-OS / deployment-target check
 
 A dependency that raises its own minimum platform can break the app even on a
