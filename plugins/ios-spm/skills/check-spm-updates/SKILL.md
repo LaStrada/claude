@@ -37,6 +37,11 @@ Trigger phrases (not exhaustive):
 **Phase 4 (build verify, optional):**
 - "verify the build first" / "build to check" / "make sure it compiles"
 
+**Bug-driven investigation (special, opt-in — never recommends an update):**
+- "we have a bug in `<package>`, is there a fix / newer version?"
+- "does updating `<package>` fix `<X>`?"
+- "check `<package>` for a fix" (with a described bug)
+
 Do NOT trigger for:
 - Generic "check for updates" (no SPM/Swift/Package/iOS context).
 - Android dependency checks — different ecosystem.
@@ -317,6 +322,30 @@ changelog marker, or a min-OS raise above the app floor:
 scheduled runs), skip Steps 7–8 and fall back to a plain text prompt: list the
 actionable updates and ask the user to name picks, `all` (non-major), or a
 specific package + version. The skill must still work without an interactive UI.
+
+### Step 10: Bug-driven pre-release investigation (opt-in)
+
+Triggered when the user reports a **specific bug** and asks whether an update
+fixes it (not a routine "what's outdated"). This mode is **investigative — it
+never recommends updating**; it answers "does a fix exist, and would it help?"
+
+1. **Take the bug.** Get the user to describe the symptom (ideally a stack
+   frame / API / error string) so there's something concrete to match against.
+2. **Widen the search to pre-releases.** Unlike discovery, include `prerelease`
+   releases, `-rc` / `-beta` / `-dev` tags, and recent `main` commits — the fix
+   may not be in a stable release yet.
+3. **Hunt for the fix; the version number alone proves nothing.** Search the
+   repo's closed/open issues, merged/open PRs, the changelog, and commits between
+   the pinned revision and `HEAD` for the symptom (`gh search issues`,
+   `gh pr list --search`, `gh api repos/<owner>/<repo>/commits`). Tie any
+   candidate fix to a specific version or commit.
+4. **Report the finding, not a recommendation:** what the fix is, which
+   version/commit carries it, and whether it genuinely matches the described bug
+   or only looks related. If it doesn't clearly address the bug, say so.
+5. **If the user still wants it:** allow bumping to that version/commit, but
+   **flag it hard** — a pre-release / commit pin is **not for production**. Say so
+   at the confirm step and in any PR body. A pre-release pick is always 🔴 and
+   carries the Step 9 / Phase 2 extra confirmation.
 
 ## Phase 2: Apply
 
