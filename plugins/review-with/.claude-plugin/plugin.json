@@ -1,0 +1,9 @@
+{
+  "name": "review-with",
+  "description": "Second-opinion code review via external CLIs. Ships a panel skill (review-with-everyone) that fans a single resolved diff out to Gemini, Copilot, and Codex in parallel — with one upload gate, a public-repo gate for Codex, and a synthesized, agreement-sorted report — plus per-tool skills (review-with-gemini / -codex / -copilot) for a single reviewer. Slash commands expose each explicitly (/review-with:super-review, :gemini, :codex, :copilot) with second-opinion and external-review aliases for the panel; natural-language triggers like \"super review\", \"second opinion\", \"external review\", or \"review with gemini\" auto-invoke. Never posts to or resolves PR threads without explicit approval.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Ståle Storø Hauknes",
+    "url": "https://github.com/LaStrada"
+  }
+}
