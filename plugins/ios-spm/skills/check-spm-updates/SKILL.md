@@ -250,6 +250,25 @@ patch/minor tag, so this signal feeds the verdict directly.
 4. **Binary-artifact deps** (xcframework, no parseable manifest) → report
    "min-OS undetermined," don't guess.
 
+#### Compatible-version ceiling
+
+When the *latest* is 🔴 because it raises min-OS above the app floor — or simply
+because it crosses a major — don't make it all-or-nothing. Compute the highest
+still-compatible version and offer it too:
+
+- **Min-OS raise:** find the boundary — the first version that lifts the platform
+  floor above the app's. **Bisect** the versions between current and latest
+  (fetch `Package.swift` platforms only at midpoints; floors rise monotonically),
+  then the highest version *below* the boundary is the ceiling. Report it, e.g.
+  *"min iOS 16→18 first appears in `14.0.0`; `13.4.2` is the last compatible."*
+- **Plain major (no OS change):** the highest `<currentMajor>.x` is a cheap
+  ceiling (pure version math, no manifest fetch) — offer it vs. the major.
+
+Surface the ceiling as a selection option (Step 7): `Up to <ceiling> (stays
+compatible)` alongside `Latest <X> (🔴 …)` and `Skip`. A ceiling pick is just an
+exact-version pick at that version. Only offer it when a compatible version
+actually exists between current and latest.
+
 ### Step 7: Interactive selection
 
 Drive the apply decision through `AskUserQuestion` rather than a free-form text
@@ -291,7 +310,8 @@ to apply them?"* — pick ≤4 from:
 - **Review one by one** → walk `actionable` in batches of up to 4 packages per
   call (so ≤9 items needs ≤3 calls: 4 + 4 + 1). One question per package: header
   = package name, prompt *"Update <name> <current> → <latest> (<tier>, <verdict>)?"*,
-  options `[Yes, No]`. Collect the "Yes" set.
+  options `[Yes, No]`. For a 🔴 pick that has a compatible ceiling, offer it as a
+  third option: `[Latest (🔴), Up to <ceiling>, No]`. Collect the chosen versions.
 - Any other choice resolves directly to a pick set.
 
 #### N ≥ INTERACTIVE_MAX → bulk
