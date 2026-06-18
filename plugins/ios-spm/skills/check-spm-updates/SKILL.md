@@ -50,7 +50,7 @@ Do NOT trigger for:
 ## Hard constraints
 
 1. **Phase 1 is strictly read-only.** Never edit `Package.resolved`, `project.pbxproj`, or run git state-changing commands.
-2. **Phase 2 requires explicit user opt-in** after Phase 1's report is visible. Never auto-jump from a discovery trigger.
+2. **Phase 2 requires explicit user opt-in** after Phase 1's report is visible. Never auto-jump from a discovery trigger. When it does run, it writes **only** the SPM version/revision pins in `project.pbxproj` plus the regenerated `Package.resolved` — never build settings, schemes, or the app's `IPHONEOS_DEPLOYMENT_TARGET`. Min-OS is read for risk assessment only; the skill never raises the app's deployment target.
 3. **Phase 3 requires explicit user opt-in** and Phase 2 must have completed successfully. Never open empty PRs.
 4. **Phase 4 is opt-in.** Never block on building unless the user asks for verification.
 5. **Never auto-resolve `kind = revision` deps.** Refuse and ask for the new SHA.
@@ -239,7 +239,8 @@ patch/minor tag, so this signal feeds the verdict directly.
    **lowest across configurations** as the floor. `grep -n
    IPHONEOS_DEPLOYMENT_TARGET <pbxproj>` surfaces every level — reconcile them
    rather than trusting the first hit (and check any `.xcconfig` the configs
-   reference).
+   reference). This value is **read only** to assess risk; the skill never writes
+   it.
 2. **Read the dependency's platform floor** at both the current and target tags:
    `gh api repos/<owner>/<repo>/contents/Package.swift?ref=<tag> --jq .content
    | base64 -d`, then parse the `platforms:` array (`.iOS(.vNN)` / `.iOS("NN")`).
