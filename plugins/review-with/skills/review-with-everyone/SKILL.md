@@ -1,6 +1,6 @@
 ---
 name: review-with-everyone
-description: Use when the user wants a combined second-opinion code review from more than one external CLI at once — triggers on "super review", "review with all", "review with everyone", "review with all <tools>", "get every second opinion", "panel review", or any ask that names two or more of codex/gemini/copilot together for a review/check/look. Resolves the scope (PR, branch, staged, unstaged, file) and the tool roster dynamically. Do NOT trigger for a single named reviewer (use review-with-codex / review-with-gemini / review-with-copilot) or for Claude-only reviews (use review / code-review / pr-review-toolkit:review-pr).
+description: Use when the user wants a combined second-opinion code review from more than one external CLI at once — triggers on "super review", "review with all", "review with everyone", "review with all <tools>", "get every second opinion", "second opinion", "external review", "panel review", or any ask that names two or more of codex/gemini/copilot together for a review/check/look. Resolves the scope (PR, branch, staged, unstaged, file) and the tool roster dynamically. Do NOT trigger for a single named reviewer (use review-with-codex / review-with-gemini / review-with-copilot) or for Claude-only reviews (use review / code-review / pr-review-toolkit:review-pr).
 ---
 
 # review-with-everyone
