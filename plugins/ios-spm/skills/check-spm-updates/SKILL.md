@@ -183,6 +183,29 @@ breaking signals — `breaking`, `removed`, `renamed`, `migrat`, `no longer`, an
 Keep-a-Changelog `### Removed` / `### Changed` headings. No notes published →
 say so and fall back to the compare URL.
 
+#### Min-OS / deployment-target check
+
+A dependency that raises its own minimum platform can break the app even on a
+patch/minor tag, so this signal feeds the verdict directly.
+
+1. **Read the app's floor — from Xcode build settings, both levels.**
+   `IPHONEOS_DEPLOYMENT_TARGET` can live in **project** build settings, be
+   overridden **per target**, and differ per configuration (Debug/Release), and
+   may come from an `.xcconfig`. Resolve the app target's *effective* value:
+   the target-level setting if present, else the project-level one; take the
+   **lowest across configurations** as the floor. `grep -n
+   IPHONEOS_DEPLOYMENT_TARGET <pbxproj>` surfaces every level — reconcile them
+   rather than trusting the first hit (and check any `.xcconfig` the configs
+   reference).
+2. **Read the dependency's platform floor** at both the current and target tags:
+   `gh api repos/<owner>/<repo>/contents/Package.swift?ref=<tag> --jq .content
+   | base64 -d`, then parse the `platforms:` array (`.iOS(.vNN)` / `.iOS("NN")`).
+3. **Compare:** dep target-min > dep current-min → it raised its floor. If the
+   new floor is **> the app's effective floor**, mark 🔴 (the app would have to
+   raise its own deployment target / drop OS support); if still ≤ app floor, 🟡.
+4. **Binary-artifact deps** (xcframework, no parseable manifest) → report
+   "min-OS undetermined," don't guess.
+
 ### Step 7: Interactive selection
 
 Drive the apply decision through `AskUserQuestion` rather than a free-form text
