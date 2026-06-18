@@ -20,7 +20,7 @@ Send a diff to GitHub's Copilot CLI for a second-opinion review, then relay find
 
 ```bash
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-BASE=$(git remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')  # usually main; dev for Airthings repos
+BASE=$(git remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')  # usually main; dev for some repos
 RANGE="$BASE..HEAD"
 git diff --stat $RANGE
 ```

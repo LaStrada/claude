@@ -8,7 +8,7 @@ Resolve the diff **once**; every tool reviews the identical payload.
 
 | Trigger in the request | Range / command | Notes |
 |---|---|---|
-| nothing specified | `BASE..HEAD` | default. `BASE=$(git remote show origin \| awk '/HEAD branch/{print $NF}')` — usually `main`, `dev` for Airthings repos. |
+| nothing specified | `BASE..HEAD` | default. `BASE=$(git remote show origin \| awk '/HEAD branch/{print $NF}')` — usually `main`, `dev` for some repos. |
 | "this PR", PR #, or PR URL | the PR's diff | also fetch existing PR comments **once** (see below) and pass to every tool. |
 | a branch name | `<branch-base>..<branch>` | sync awareness: if the branch is behind base it still diffs fine. |
 | "staged" | `git diff --cached` | |

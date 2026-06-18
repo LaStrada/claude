@@ -12,7 +12,7 @@ For every finding you surface — whether it's Gemini's own output or an upstrea
 
 ```
 Copilot:
-src/commonMain/kotlin/com/airthings/lib/logging/facility/JsonLoggerFacility.kt
+src/commonMain/kotlin/com/example/lib/logging/facility/JsonLoggerFacility.kt
 Inside the mutex you call io.size(logFile) once to decide whether to seed the file with [], and again to compute hasPriorEntries. Since both checks can be derived from a single pre-seed size read (e.g., val size = io.size(logFile); seed if size == 0; hasPriorEntries = size > 2), you can avoid an extra filesystem stat per log call.
 ```
 
