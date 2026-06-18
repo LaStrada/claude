@@ -122,10 +122,10 @@ buckets (omit empty ones):
 ## Direct deps with updates available
 
 ### Auto-resolvable (upToNextMajor / upToNextMinor)
-- [<n>] <name>: <current> → <latest> — <tier> (spec: <kind>)
+- [<n>] <name>: <current> → <latest> — <tier>, <verdict> (spec: <kind>)
 
 ### Pinned-exact (manual pbxproj edit)
-- [<n>] <name>: <current> → <latest> — <tier> (spec: exactVersion)
+- [<n>] <name>: <current> → <latest> — <tier>, <verdict> (spec: exactVersion)
 
 ### Pinned-revision (skill won't auto-bump)
 - <name>: on commit <short-sha>. No auto-check.
@@ -154,6 +154,34 @@ Parsing notes: strip a leading `v`; tolerate 4-segment versions (segment 1 =
 major, 2 = minor, 3+ = patch). **Pre-1.0 caveat:** for `0.y.z` a `0.6 → 0.7`
 (minor) bump is breaking under semver — treat pre-1.0 minor as major-level risk.
 Non-semver / unparseable tags → tier `unknown`, treat as caution.
+
+#### Risk verdict
+
+Combine three signals into 🟢 Safe / 🟡 Caution / 🔴 Breaking-likely (the verdict
+is the **worst** of the three). Always show the reason(s).
+
+| Signal | 🟢 Safe | 🟡 Caution | 🔴 Breaking-likely |
+|---|---|---|---|
+| Semver delta | patch | minor | major (or pre-1.0 minor) |
+| Changelog markers | none | `deprecated` only | `breaking` / `removed` / `renamed` / `migration` |
+| Min-OS / platform | unchanged | raised but ≤ app floor | raised **above** the app's deployment target |
+
+Example reason string: `🔴 major; changelog: "removed Foo"; min iOS 16→18 > app 16`.
+
+#### Deep analysis (lazy)
+
+The semver-delta signal is free and always computed. The other two need network
+calls (release notes + the dependency's `Package.swift`), so run them **lazily**:
+
+- **Auto** for major bumps and any 🔴 candidate — the ones worth pre-analyzing.
+- **On demand** for everything else (the user asks, e.g. "changelog for `<pkg>`"
+  or "is `<pkg>` safe?").
+
+**Changelog marker scan:** fetch release notes between `from` and `to` (all
+intermediate releases, not just the target tag) and grep case-insensitively for
+breaking signals — `breaking`, `removed`, `renamed`, `migrat`, `no longer`, and
+Keep-a-Changelog `### Removed` / `### Changed` headings. No notes published →
+say so and fall back to the compare URL.
 
 ### Step 7: Interactive selection
 
