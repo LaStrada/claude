@@ -99,18 +99,35 @@ Spec kinds: `exactVersion`, `upToNextMajorVersion`/`upToNextMinorVersion`, `revi
 **Use the GitHub releases API**, not just tags. Tag-only lookup can be wrong for projects with mixed prefix schemes (e.g. a repo that has both `vX.Y.Z` legacy tags and unprefixed `X.Y.Z` modern tags — `git ls-remote --sort='-v:refname'` orders `v…` higher than digits lexicographically, so you'd get a stale legacy tag back as "latest").
 
 ```bash
-# Primary: releases endpoint, newest first
-gh api "repos/$owner_repo/releases?per_page=10" --jq '.[].tag_name' \
+# Primary: STABLE releases only (drop drafts + pre-releases), highest semver wins
+gh api "repos/$owner_repo/releases?per_page=30" \
+  --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' \
   | sed 's/^v//' \
   | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?(\.[0-9]+)?$' \
-  | head -1
+  | sort -V | tail -1
 
 # Fallback for repos without releases:
 gh api "repos/$owner_repo/tags?per_page=100" --jq '.[].name' \
-  | sed 's/^v//' | grep -E '^[0-9]+...' | sort -V | tail -1
+  | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?(\.[0-9]+)?$' | sort -V | tail -1
 ```
 
 For non-GitHub hosts (rare): print "couldn't auto-check, location: `<url>`" and skip.
+
+**Make sure "latest" is a real stable release.** A tag can carry GitHub's
+"Latest" badge yet be a pre-release or a mispublish, so don't trust the badge or
+recency alone:
+
+- **Honor the API flags:** skip entries where `draft` or `prerelease` is true.
+- **Reject pre-release / non-release tags by shape:** the strict semver regex
+  above already drops suffixes (`-rc`, `-rc1`, `-dev`, `-beta`, `-alpha`), build
+  metadata (`+…`), and bare commit hashes — keep it strict on purpose.
+- **Catch a mispublished badge:** if `gh api repos/$owner_repo/releases/latest`
+  points at a tag that fails the stable filter (suffix/hash/pre-release), do NOT
+  adopt it — fall back to the highest clean stable semver and **flag the
+  discrepancy** to the user (e.g. *"newest published `0.1.2-dev` looks like a
+  pre-release/mispublish; treating `0.1.1` as latest stable"*).
+- Pre-releases are only ever considered in the bug-driven mode (Step 10), and
+  even then never as a prod recommendation.
 
 ### Step 6: Classify, assess, and report
 
