@@ -191,6 +191,22 @@ do you want to do?"* — options:
 Whatever the user picks, resolve it to a concrete pick set and hand off to
 Phase 2, which confirms the picks before editing anything.
 
+### Step 8: Parsing the free-text ("Other") slot
+
+When the user answers through "Other", parse it against `actionable` before
+applying:
+
+- **Names** — case-insensitive substring match on the package identity
+  (e.g. "firebase" → `firebase-ios-sdk`).
+- **List numbers / ranges** — `3`, `1,4,7`, `5-8` map to the numbered rows from
+  Step 6.
+- **Keywords** — `all`, `minors` / `patches` (exclude majors), `all except <x>`,
+  `none`.
+
+If anything is unmatched or ambiguous, DO NOT guess: restate what you understood,
+list the unmatched tokens, and re-ask. The resolved pick set then flows into
+Phase 2's "confirm the picks" step, which is the final gate before any edit.
+
 ## Phase 2: Apply
 
 Enter only on explicit opt-in. Examples that count: *"Yes, apply"*, *"Bump <package> to X.Y.Z"*, *"Bump everything auto-resolvable"*.
