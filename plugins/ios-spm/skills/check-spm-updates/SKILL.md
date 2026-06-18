@@ -301,16 +301,17 @@ If anything is unmatched or ambiguous, DO NOT guess: restate what you understood
 list the unmatched tokens, and re-ask. The resolved pick set then flows into
 Phase 2's "confirm the picks" step, which is the final gate before any edit.
 
-### Step 9: Major bumps & non-interactive fallback
+### Step 9: Breaking-likely (🔴) gating & non-interactive fallback
 
-**Major bumps are never applied silently.** A major version jump almost always
-carries breaking API changes, so:
+**🔴 picks are never applied silently** — whether 🔴 from a major bump, a breaking
+changelog marker, or a min-OS raise above the app floor:
 
-- Exclude majors from `Apply all` and `Apply all minors/patches`.
-- Offer a major only through an explicit `… incl. majors` option, an individual
+- Exclude them from `Patches only` and `Minor + patch`.
+- They come in only through an explicit `… incl. majors` option, an individual
   `Yes` in "Review one by one", or by being named in the free-text slot.
-- When a major is in scope, recommend it gets its own branch + PR and a read of
-  the upstream changelog before committing.
+- When one is in scope, recommend it gets its own branch + PR and a read of the
+  upstream changelog before committing.
+- They never hard-block: see the extra confirmation in Phase 2 Step 1.
 
 **Non-interactive fallback.** When `AskUserQuestion` is unavailable (headless or
 scheduled runs), skip Steps 7–8 and fall back to a plain text prompt: list the
@@ -323,7 +324,14 @@ Enter only on explicit opt-in. Examples that count: *"Yes, apply"*, *"Bump <pack
 
 ### Step 1: Confirm the picks
 
-Restate exactly what will be bumped and to what version. Wait for confirmation unless the user already named specific packages + versions.
+Restate exactly what will be bumped and to what version, **with each pick's risk
+verdict**. Wait for confirmation unless the user already named specific packages
++ versions.
+
+Any 🔴 (breaking-likely) pick needs a **second, explicit confirmation** — call out
+why it's 🔴 (major / breaking changelog / min-OS raise) and offer to show the
+changelog first. Never hard-block: if the user confirms, apply it. Pre-release
+picks (Step 10) carry the same extra confirm plus the not-for-prod flag.
 
 ### Step 2: Edit pbxproj for each direct exact-pinned pick
 
