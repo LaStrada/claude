@@ -246,30 +246,41 @@ selector and the user names rows through the "Other" slot.
 #### N == 0
 Don't ask anything. Print "Everything's up to date" and stop.
 
+Frame the options by **risk tier**, and build the list from the tiers actually
+present (don't offer "Patches only" when there are no patch bumps). Majors are
+never in a bulk option — they come in only via the explicit incl.-majors choice,
+one-by-one, or the free-text slot.
+
 #### 1 ≤ N < INTERACTIVE_MAX → granular
 One `AskUserQuestion`, single question — *"N updates available. How do you want
-to apply them?"* — options:
+to apply them?"* — pick ≤4 from:
 
-1. `Apply all (N)` — applies every non-major pick
-2. `Review one by one`
-3. `Minors/patches only` — include this option ONLY when the set also contains a major
-4. *(automatic "Other")* — free-text, e.g. "the networking lib and the logging one"
+- `Patches only (🟢 safest)` — when patch bumps exist
+- `Minor + patch (🟡 low risk)` — excludes majors
+- `Review one by one`
+- *(automatic "Other")* — names/numbers, a tier word ("patches", "minors"),
+  "everything incl. majors", or "changelog for `<pkg>`"
 
 - **Review one by one** → walk `actionable` in batches of up to 4 packages per
   call (so ≤9 items needs ≤3 calls: 4 + 4 + 1). One question per package: header
-  = package name, prompt *"Update <name> <current> → <latest>?"* (append
-  `(⚠ major)` when relevant), options `[Yes, No]`. Collect the "Yes" set.
+  = package name, prompt *"Update <name> <current> → <latest> (<tier>, <verdict>)?"*,
+  options `[Yes, No]`. Collect the "Yes" set.
 - Any other choice resolves directly to a pick set.
 
 #### N ≥ INTERACTIVE_MAX → bulk
 The numbered list from Step 6 is the selector — do NOT try to render each package
 as an option. One `AskUserQuestion` — *"N updates available (listed above). What
-do you want to do?"* — options:
+do you want to do?"* — pick ≤4 from:
 
-1. `Apply all minors/patches` — recommended; excludes majors
-2. `Apply everything incl. majors` — show only when majors exist (else `Apply all`)
-3. `Skip`
-4. *(automatic "Other")* — free-text by name or list number, e.g. "1, 3, 6-9"
+- `Patches only (🟢 safest)`
+- `Minor + patch (🟡 low risk)` — excludes majors
+- `Everything incl. majors (🔴 review)` — only when majors exist; otherwise `Skip`
+- *(automatic "Other")* — names/numbers ("1, 3, 6-9"), a tier word, or
+  "changelog for `<pkg>`"
+
+**Changelog is always available.** Regardless of count or tier, the user can ask
+"changelog for `<pkg>`" / "is `<pkg>` safe?" at any point — run the on-demand
+deep analysis (Step 6) and show the notes + verdict before they decide.
 
 Whatever the user picks, resolve it to a concrete pick set and hand off to
 Phase 2, which confirms the picks before editing anything.
